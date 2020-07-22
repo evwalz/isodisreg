@@ -1,6 +1,8 @@
 from isodisreg import idr
+import numpy as np
 
 # Get data
+rain = idr.load_rain()
 varNames = rain.columns[3:55]
 X = rain[varNames][0:185]
 y = rain['obs'][0:185]
@@ -18,7 +20,6 @@ fit = idr.idr(y = y, X = X, orders = orders, groups = groups)
 data = rain[varNames][185:190]
 
 preds1 = fit.predict()
-
 preds2 = fit.predict(data)
 
 

@@ -2,6 +2,7 @@ MANIFEST.in
 README.md
 setup.py
 idr/__init__.py
+idr/load_data.py
 idr/modeling_evaluation.py
 idr/partialorders.py
 idr/pava.py
