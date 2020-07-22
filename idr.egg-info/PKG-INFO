@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: idr
+Version: 0.1
+Summary: Isotonic distributional regression (IDR) is a nonparametric technique for the estimation of distributions of a binary or numeric response variable conditional on numeric or ordinal covariates.
+Home-page: https://github.com/evwalz/idr
+Author: Eva-Maria Walz
+Author-email: evamaria.walz@gmx.de
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN

@@ -1,0 +1,9 @@
+numpy
+pandas
+scipy
+progressbar
+dc_stat_think
+collections
+osqp
+matplotlib
+sklearn

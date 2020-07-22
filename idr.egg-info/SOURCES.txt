@@ -1,0 +1,13 @@
+MANIFEST.in
+README.md
+setup.py
+idr/__init__.py
+idr/modeling_evaluation.py
+idr/partialorders.py
+idr/pava.py
+idr.egg-info/PKG-INFO
+idr.egg-info/SOURCES.txt
+idr.egg-info/dependency_links.txt
+idr.egg-info/requires.txt
+idr.egg-info/top_level.txt
+idr/packageData/rain.dat
