@@ -117,7 +117,7 @@ class idrpredict(object):
         if np.isnan(np.sum(y)) == True:
             raise ValueError("obs contains nan values")
     
-        if len(y) != 1 and len(y) != len(predictions):
+        if y.size != 1 and len(y) != len(predictions):
             raise ValueError("obs must have length 1 or the same length as predictions")
     
         def get_points(predictions):
@@ -387,7 +387,7 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
     if X.isnull().values.any() == True:
         raise ValueError("X contains nan values")
     
-    if len(y) != X.shape[0]:
+    if y.size != X.shape[0]:
         raise ValueError("length of y must match number of rows in X")
     
     if all(item in  ['comp', 'icx', 'std'] for item in orders.values()) == False:
