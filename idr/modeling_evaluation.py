@@ -159,6 +159,7 @@ class idrpredict(object):
             return(interp1d(x = np.hstack([data["cdf"], np.max(data["cdf"])]), y =np.hstack([data["points"],data["points"].iloc[-1]]) ,kind='previous', fill_value="extrapolate")(quantiles))
 
         return(list(map(q0, predictions)))
+    
         
 
 class idrobject:
