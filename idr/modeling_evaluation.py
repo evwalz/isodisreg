@@ -134,6 +134,31 @@ class idrpredict(object):
         w = list(map(modify_points, p))
     
         return(list(map(crps0, y, p, w, x)))
+    
+    def qpred (self, quantiles):
+        """
+        Evaluate quantile function of IDR predictions 
+
+        Parameters
+        ----------
+        quantiles : quantiles
+            numeric vector of quantiles
+
+
+        Returns
+        -------
+        list of forecast for desired quantiles
+
+        """
+        predictions = self.predictions
+        quantiles = np.array(quantiles)
+        if np.min(quantiles) < 0 or np.max(quantiles) > 1:
+            raise ValueError("quantiles must be a numeric vector with entries in [0,1]")
+    
+        def q0 (data):
+            return(interp1d(x = np.hstack([data["cdf"], np.max(data["cdf"])]), y =np.hstack([data["points"],data["points"].iloc[-1]]) ,kind='previous', fill_value="extrapolate")(quantiles))
+
+        return(list(map(q0, predictions)))
         
 
 class idrobject:
