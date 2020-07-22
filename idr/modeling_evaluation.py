@@ -9,8 +9,8 @@ import dc_stat_think as dcst
 from collections import defaultdict 
 import pandas as pd
 import osqp
-from pava import pavaDec, pavaCorrect
-from partialorders import comp_ord, tr_reduc, neighbor_points
+from .pava import pavaDec, pavaCorrect
+from .partialorders import comp_ord, tr_reduc, neighbor_points
 
 class idrpredict(object):
     
