@@ -6,6 +6,7 @@ setup(
     name='idr',
     version='0.1',
     packages=find_packages(exclude=['tests*']),
+    packages_data = {'rain':['packageData/rain.dat']}, 
     license='MIT',
     description='Isotonic distributional regression (IDR) is a nonparametric technique for the estimation of distributions of a binary or numeric response variable conditional on numeric or ordinal covariates.',
     long_description=open('README.md').read(),
