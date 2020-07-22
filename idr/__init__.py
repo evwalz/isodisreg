@@ -1,2 +1,2 @@
-from .modeling_evaluation import idrobject, idrpredict
+import model_evaluation
 
