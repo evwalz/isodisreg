@@ -11,12 +11,126 @@ import pandas as pd
 import osqp
 from .pava import pavaDec, pavaCorrect
 from .partialorders import comp_ord, tr_reduc, neighbor_points
+import random
 
 class idrpredict(object):
     
     def __init__(self, predictions, incomparables):
         self.predictions = predictions
         self.incomparables = incomparables 
+        
+    def qscore (self, quantiles, y) :
+        """
+        Quantile score of IDR quantile predictions
+
+        Parameters
+        ----------
+        quantiles : np array
+            vector of quantiles
+        y : np array
+            one dimensional array of observation of the same length as predictions
+
+
+        Returns
+        -------
+        matrix of quantile scores
+
+        """
+        if y.ndim > 1:
+                raise ValueError("y must be a 1-D array")
+        quantiles = np.asarray(quantiles)
+        y = np.asarray(y)
+        predicted = np.asarray(self.qpred(quantiles = quantiles))
+        ly = y.size
+        if ly != 1 and ly != predicted.shape[0]:
+            raise ValueError("y must have length 1 or same lentgh as predictions")
+        qsvals = np.transpose(np.transpose(predicted) - y)
+        qsvals2 = np.where(qsvals > 0,1,0) - quantiles
+        return(2 * qsvals * qsvals2)
+    
+    def bscore (self, thresholds, y) :
+        """
+        Brier score of forecast probabilities for exceeding given thresholds
+
+        Parameters
+        ----------
+        thresholds : np array
+            vector of thresholds
+        y : np array
+            one dimensional array of observation
+
+
+        Returns
+        -------
+        matrix of brier scores
+
+        """
+        if y.ndim > 1:
+                raise ValueError("y must be a 1-D array")
+        thresholds = np.asarray(thresholds)
+        y = np.asarray(y)
+        predicted = np.asarray(self.cdf(thresholds = thresholds))
+        ly = y.size
+        if ly != 1 and ly != predicted.shape[0]:
+            raise ValueError("y must have length 1 or same lentgh as predictions")
+        if ly == 1:
+            if thresholds.size == 1:
+                if y <= thresholds:
+                    predicted = predicted -1
+            else :
+                sel_column = y <= thresholds    
+                predicted[:, sel_column] = predicted[:, sel_column] - 1
+        else:
+            predicted = np.subtract(predicted , y[:, None] <= thresholds)
+        return(np.square(predicted))
+
+    def pit (self, y, randomize = True, seed = None) :
+        """
+        Probability integral transform (PIT) of IDR
+
+        Parameters
+        ----------
+        y : np array
+            one dimensional array of observation
+        randomize : boolean, optional
+            PIT values should be randomized at discontinuity points of predictive CDF.
+            The default is True.
+        seed : number, optional
+            seed argument for random number generator. The default is None.
+
+        Returns
+        -------
+        One dimensional array of PIT values
+
+        """
+        if y.ndim > 1:
+            raise ValueError("y must be a 1-D array")
+        y = np.asarray(y)
+        ly = y.size
+        predictions = self.predictions
+    
+        if ly != len(predictions):
+            raise ValueError("y must have same length as predictions")
+    
+        def pit0 (data, y):
+            return(interp1d(x = np.hstack([np.min(data["points"]), data["points"]]), y = np.hstack([0,data["cdf"]]), kind='previous', fill_value="extrapolate")(y))
+    
+        pitVals = np.array(list(map(pit0, predictions, list(y))))
+        if randomize :
+            sel = [x.shape[0] for x in predictions] 
+            sel = np.where(np.array(sel) > 1)[0]
+            if not any(sel):
+                eps = 1
+            else :
+                preds_sel = [predictions[i] for i in sel]
+                eps = np.min([np.min(np.diff(x["points"])) for x in preds_sel]) 
+            lowerPitVals = np.array(list(map(pit0, predictions, y-eps*0.5)))
+            if seed is not None:
+                random.seed(seed)
+            sel = lowerPitVals < pitVals
+            if any(sel):
+                pitVals[sel] = np.random.uniform(low = lowerPitVals[sel], high = pitVals[sel], size = np.sum(sel)) 
+        return(pitVals)
     
     def cdf (self, thresholds):
         """
