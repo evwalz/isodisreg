@@ -542,28 +542,28 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
     
     if nThr == 1:
         raise ValueError("y must contain more than 1 distinct value")
-    
-    X = prepareData(X, groups, orders)
-    nVar = X.shape[1]
-    oldNames = X.columns 
-    X['y'] = y
-    X['ind'] = np.arange(len(y))
+    Xp = X.copy()
+    Xp = prepareData(Xp, groups, orders)
+    nVar = Xp.shape[1]
+    oldNames = Xp.columns 
+    Xp['y'] = y
+    Xp['ind'] = np.arange(len(y))
     tt = list(oldNames)
-    X_grouped = X.groupby(tt).agg({'y':list, 'ind':list})
+    X_grouped = Xp.groupby(tt).agg({'y':list, 'ind':list})
     X_grouped = X_grouped.sort_values(by=list(oldNames)[::-1])
     X_grouped = X_grouped.reset_index()
     cpY = X_grouped["y"]
     indices = X_grouped["ind"]
-    X = X_grouped[tt]
+    Xp = X_grouped[tt]
     lenlist = np.vectorize(len)
     weights = lenlist(indices)
-    N = X.shape[0]
+    N = Xp.shape[0]
     if nVar == 1:
         constr = None
 #        diagnostic = dict({"precision":0, "convergence":0})
         cdf = pavaDec(cpY, thresholds, weights)
     else:
-        constr = comp_ord(X)
+        constr = comp_ord(Xp)
         cdf = np.zeros((N,nThr-1))
         A = tr_reduc(constr[0], N)
         nConstr = A.shape[1]
