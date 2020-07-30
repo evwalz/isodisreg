@@ -592,7 +592,7 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
     cdf1 = np.ones((N,nThr))
     cdf1[:,:-1] = cdf
     
-    idr_object = idrobject(cdf = cdf1, thresholds = thresholds, indices = indices, X = X, y = cpY, 
+    idr_object = idrobject(cdf = cdf1, thresholds = thresholds, indices = indices, X = Xp, y = cpY, 
                            groups = groups, orders = orders, constraints = constr)
     return(idr_object)
 
