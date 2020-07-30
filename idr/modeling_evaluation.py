@@ -272,7 +272,7 @@ class idrpredict(object):
         def q0 (data):
             return(interp1d(x = np.hstack([data["cdf"], np.max(data["cdf"])]), y =np.hstack([data["points"],data["points"].iloc[-1]]) ,kind='previous', fill_value="extrapolate")(quantiles))
 
-        return(list(map(q0, predictions)))
+        return(np.vstack(list(map(q0, predictions))))
     
         
 
@@ -333,7 +333,7 @@ class idrobject:
                 return(idr_predictions)
     
             if isinstance(data, pd.DataFrame) == False:
-                raise ValueError("data must be a data frame")
+                raise ValueError("data must be a pandas data frame")
             X = self.X
             M = all(elem in data.columns for elem in X.columns)
             if M == False:
@@ -507,6 +507,9 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
         constraints: in multivariate IDR is None, 
         otherwise the order constraints for optimization
     """
+    if not isinstance(X, pd.DataFrame):
+        raise ValueError("X must be a pandas data frame")
+    
     if groups is None:
         groups = dict(zip(X.columns, np.ones(X.shape[1])))
     
