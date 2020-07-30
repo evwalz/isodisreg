@@ -350,7 +350,7 @@ class idrobject:
           #  x = x.astype(int)
                 smaller = findInterval(x, X)
                 smaller = np.where(smaller == 0, 1, smaller) - 1
-                wg = np.interp(x, X, np.arange(1, X.shape[0]+1), left=1, right= X.shape[0]) - np.arange(0, X.shape[0])[smaller.astype(int)]    
+                wg = np.interp(x, X, np.arange(1, X.shape[0]+1), left=1, right= X.shape[0]) - np.arange(1, X.shape[0]+1)[smaller.astype(int)]    
                 greater = smaller + (wg > 0).astype(int) 
         #if fct == False:
                 ws = 1-wg
