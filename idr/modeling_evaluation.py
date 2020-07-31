@@ -81,7 +81,7 @@ class idrpredict(object):
                 sel_column = y <= thresholds    
                 predicted[:, sel_column] = predicted[:, sel_column] - 1
         else:
-            predicted = np.subtract(predicted , y[:, None] <= thresholds)
+            predicted = np.subtract(predicted , np.asarray(y <= 0))
         return(np.square(predicted))
 
     def pit (self, y, randomize = True, seed = None) :
@@ -156,7 +156,7 @@ class idrpredict(object):
             raise ValueError("thresholds contains nan values")
     
         def cdf0 (data):
-        # f2 = interp1d(x, y, kind='previous')
+        # f2 = interp1d(x, y, kind='next')
             return(interp1d(x = np.hstack([np.min(data["points"]),data["points"]]), y = np.hstack([0,data["cdf"]]), kind='previous', fill_value="extrapolate")(thresholds))
     
         return(list(map(cdf0, predictions)))
@@ -270,7 +270,7 @@ class idrpredict(object):
             raise ValueError("quantiles must be a numeric vector with entries in [0,1]")
     
         def q0 (data):
-            return(interp1d(x = np.hstack([data["cdf"], np.max(data["cdf"])]), y =np.hstack([data["points"],data["points"].iloc[-1]]) ,kind='previous', fill_value="extrapolate")(quantiles))
+            return(interp1d(x = np.hstack([data["cdf"], np.max(data["cdf"])]), y =np.hstack([data["points"],data["points"].iloc[-1]]) ,kind='next', fill_value="extrapolate")(quantiles))
 
         return(np.vstack(list(map(q0, predictions))))
     
@@ -314,8 +314,8 @@ class idrobject:
 
             """
     
-            cdf = self.cdf
-            thresholds = self.thresholds
+            cdf = self.cdf.copy()
+            thresholds = self.thresholds.copy()
             order_indices = []
             preds = []
             if data is None:
@@ -334,10 +334,11 @@ class idrobject:
     
             if isinstance(data, pd.DataFrame) == False:
                 raise ValueError("data must be a pandas data frame")
-            X = self.X
+            X = self.X.copy()
             M = all(elem in data.columns for elem in X.columns)
             if M == False:
                 raise ValueError("some variables of idr fit are missing in data")
+            data = data.copy()
             data = prepareData(data[X.columns], groups = self.groups, orders = self.orders)
             nVar = data.shape[1]
             if nVar == 1:
