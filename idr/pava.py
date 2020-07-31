@@ -62,8 +62,8 @@ def pavaCorrect(cdf):
     m = cdf.shape[1]
     x = np.arange(n)
     out = np.zeros((n,m))
-    for k in range(m):
-        y = cdf[:,k]
-        ir = IsotonicRegression(increasing = False)
+    for k in range(n):
+        y = cdf[k,:]
+        ir = IsotonicRegression(increasing = True)
         out[:,k] = ir.fit_transform(x, y)
     return(out)
