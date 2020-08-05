@@ -379,11 +379,11 @@ class idrobject:
             nPoints = neighbor_points(data, X, order_X = self.constraints)
             smaller = nPoints[0]
             greater = nPoints[1]
-            incomparables =  np.array(list(map(len, smaller)))+np.array(list(map(len, smaller))) == 0
+            incomparables =  np.array(list(map(len, smaller)))+np.array(list(map(len, greater))) == 0
 
             if any(incomparables):
                 y = self.y
-                edf = np.round(dcst.ecdf_formal(thresholds, y), 3)
+                edf = np.round(dcst.ecdf_formal(thresholds, y.explode()), 3)
                 sel = edf > 0
                 edf = edf[sel]
                 points = thresholds[sel]
@@ -407,7 +407,7 @@ class idrobject:
                     lower = np.round(np.amax(cdf[greater[i].astype(int),:], axis=0), digits)
                     sel = np.hstack([lower[0] != 0, np.diff(lower) != 0]) 
                     lower = lower[sel] 
-                    upper = np.zeros(len(lower))
+                    upper = np.ones(len(lower))
                     estimCDF = lower
                 else: 
                     lower = np.round(np.amax(cdf[greater[i].astype(int),:], axis=0), digits)
