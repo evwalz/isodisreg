@@ -81,7 +81,7 @@ class idrpredict(object):
                 sel_column = y <= thresholds    
                 predicted[:, sel_column] = predicted[:, sel_column] - 1
         else:
-            predicted = np.subtract(predicted , np.asarray(y <= 0))
+            predicted = np.subtract(predicted , np.vstack([y[k] <= thresholds for k in range(ly)]))
         return(np.square(predicted))
 
     def pit (self, y, randomize = True, seed = None) :
@@ -159,7 +159,7 @@ class idrpredict(object):
         # f2 = interp1d(x, y, kind='next')
             return(interp1d(x = np.hstack([np.min(data["points"]),data["points"]]), y = np.hstack([0,data["cdf"]]), kind='previous', fill_value="extrapolate")(thresholds))
     
-        return(list(map(cdf0, predictions)))
+        return(np.vstack(list(map(cdf0, predictions))))
 
     def plot (self, index = 0, bounds = True, col_cdf = 'black', col_bounds = 'blue'):
         """
