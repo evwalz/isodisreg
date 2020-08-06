@@ -383,12 +383,12 @@ class idrobject:
 
             if any(incomparables):
                 y = self.y
-                edf = np.round(dcst.ecdf_formal(thresholds, y.explode()), 3)
+                edf = np.round(dcst.ecdf_formal(thresholds, y.explode()), digits)
                 sel = edf > 0
                 edf = edf[sel]
                 points = thresholds[sel]
                 upr = np.where(edf == 1)[0]
-                if upr < len(edf):
+                if upr < len(edf)-1:
                     points = np.delete(points, np.arange(upr, len(edf)))
                     edf = np.delete(edf, np.arange(upr, len(edf)))                    
                 dat = {'points':points, 'lower':edf, 'cdf':edf, 'upper':edf}
