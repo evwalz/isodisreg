@@ -50,10 +50,10 @@ class idrpredict(object):
                 raise ValueError("y must be a 1-D array")
         quantiles = np.asarray(quantiles)
         y = np.asarray(y)
-        predicted = np.asarray(self.qpred(quantiles = quantiles))
+        predicted = self.qpred(quantiles = quantiles)
         ly = y.size
         if ly != 1 and ly != predicted.shape[0]:
-            raise ValueError("y must have length 1 or same lentgh as predictions")
+            raise ValueError("y must have length 1 or same length as predictions")
         qsvals = np.transpose(np.transpose(predicted) - y)
         qsvals2 = np.where(qsvals > 0,1,0) - quantiles
         return(2 * qsvals * qsvals2)
@@ -79,7 +79,7 @@ class idrpredict(object):
                 raise ValueError("y must be a 1-D array")
         thresholds = np.asarray(thresholds)
         y = np.asarray(y)
-        predicted = np.asarray(self.ecdf(thresholds = thresholds))
+        predicted = np.asarray(self.cdf(thresholds = thresholds))
         ly = y.size
         if ly != 1 and ly != predicted.shape[0]:
             raise ValueError("y must have length 1 or same lentgh as predictions")
@@ -126,8 +126,8 @@ class idrpredict(object):
             return(interp1d(x = np.hstack([np.min(data.points), data.points]), y = np.hstack([0,data.ecdf]), kind='previous', fill_value="extrapolate")(y))
     
         pitVals = np.array(list(map(pit0, predictions, list(y))))
-        if randomize :
-            sel = [x.shape[0] for x in predictions] 
+        if randomize:
+            sel = [x.ecdf.shape[0] for x in predictions]
             sel = np.where(np.array(sel) > 1)[0]
             if not any(sel):
                 eps = 1
@@ -169,7 +169,7 @@ class idrpredict(object):
         # f2 = interp1d(x, y, kind='next')
             return(interp1d(x = np.hstack([np.min(data.points),data.points]), y = np.hstack([0,data.ecdf]), kind='previous', fill_value="extrapolate")(thresholds))
     
-        return(np.vstack(list(map(cdf0, predictions))))
+        return(np.vstack(list(map(cdf0, predictions))).squeeze())
 
     def plot (self, index = 0, bounds = True, col_cdf = 'black', col_bounds = 'blue'):
         """
@@ -207,7 +207,7 @@ class idrpredict(object):
             else:    
                 plt.hlines(y = 0, xmin = np.min(xnew), xmax = np.max(xnew), color = col_bounds, linestyle = ':')
             if any(data.upper < 1):
-                stepfun3 = interp1d(x = np.hstack([np.min(data.points),data.points]), y = np.hstack([0,data.points]), kind='previous', fill_value="extrapolate")
+                stepfun3 = interp1d(x = np.hstack([np.min(data.points),data.points]), y = np.hstack([0,data.upper]), kind='previous', fill_value="extrapolate")
                 plt.plot(np.hstack([np.min(data.points),xnew]), np.hstack([0,stepfun3(xnew)]), color = col_bounds, linestyle = ':')
             else:
                 plt.hlines(y = 1,  xmin = np.min(xnew), xmax = np.max(xnew), color = col_bounds, linestyle = ':')
@@ -281,9 +281,9 @@ class idrpredict(object):
             raise ValueError("quantiles must be a numeric vector with entries in [0,1]")
     
         def q0 (data):
-            return(interp1d(x = np.hstack([data.ecdf, np.max(data.ecdf)]), y =np.hstack([data.points,data.points.iloc[-1]]) ,kind='next', fill_value="extrapolate")(quantiles))
+            return(interp1d(x = np.hstack([data.ecdf, np.max(data.ecdf)]), y =np.hstack([data.points,data.points[-1]]) ,kind='next', fill_value="extrapolate")(quantiles))
 
-        return(np.vstack(list(map(q0, predictions))))
+        return(np.vstack(list(map(q0, predictions))).squeeze())
     
         
 
