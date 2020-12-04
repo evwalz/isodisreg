@@ -4,14 +4,24 @@ pd.options.mode.chained_assignment = None
 import matplotlib.pyplot as plt 
 from scipy.interpolate import interp1d
 import scipy.sparse as sparse
-from progressbar import progressbar
+from tqdm import tqdm
 import dc_stat_think as dcst
-from collections import defaultdict 
-import pandas as pd
+from collections import defaultdict
 import osqp
 from .pava import pavaDec, pavaCorrect
 from .partialorders import comp_ord, tr_reduc, neighbor_points
 import random
+import bisect
+from ._isodisreg import isocdf_seq
+
+class predictions_idr(object):
+
+    def __init__(self, ecdf, points, lower, upper):
+        self.ecdf = ecdf
+        self.points = points
+        self.lower = lower
+        self.upper = upper
+
 
 class idrpredict(object):
     
@@ -69,7 +79,7 @@ class idrpredict(object):
                 raise ValueError("y must be a 1-D array")
         thresholds = np.asarray(thresholds)
         y = np.asarray(y)
-        predicted = np.asarray(self.cdf(thresholds = thresholds))
+        predicted = np.asarray(self.ecdf(thresholds = thresholds))
         ly = y.size
         if ly != 1 and ly != predicted.shape[0]:
             raise ValueError("y must have length 1 or same lentgh as predictions")
@@ -113,7 +123,7 @@ class idrpredict(object):
             raise ValueError("y must have same length as predictions")
     
         def pit0 (data, y):
-            return(interp1d(x = np.hstack([np.min(data["points"]), data["points"]]), y = np.hstack([0,data["cdf"]]), kind='previous', fill_value="extrapolate")(y))
+            return(interp1d(x = np.hstack([np.min(data.points), data.points]), y = np.hstack([0,data.ecdf]), kind='previous', fill_value="extrapolate")(y))
     
         pitVals = np.array(list(map(pit0, predictions, list(y))))
         if randomize :
@@ -123,7 +133,7 @@ class idrpredict(object):
                 eps = 1
             else :
                 preds_sel = [predictions[i] for i in sel]
-                eps = np.min([np.min(np.diff(x["points"])) for x in preds_sel]) 
+                eps = np.min([np.min(np.diff(x.points)) for x in preds_sel])
             lowerPitVals = np.array(list(map(pit0, predictions, y-eps*0.5)))
             if seed is not None:
                 random.seed(seed)
@@ -157,7 +167,7 @@ class idrpredict(object):
     
         def cdf0 (data):
         # f2 = interp1d(x, y, kind='next')
-            return(interp1d(x = np.hstack([np.min(data["points"]),data["points"]]), y = np.hstack([0,data["cdf"]]), kind='previous', fill_value="extrapolate")(thresholds))
+            return(interp1d(x = np.hstack([np.min(data.points),data.points]), y = np.hstack([0,data.ecdf]), kind='previous', fill_value="extrapolate")(thresholds))
     
         return(np.vstack(list(map(cdf0, predictions))))
 
@@ -184,20 +194,21 @@ class idrpredict(object):
         """
         predictions = self.predictions
         data = predictions[index]
-        stepfun = interp1d(x = np.hstack([np.min(data["points"]),data["points"]]), y = np.hstack([0,data["cdf"]]), kind='previous', fill_value="extrapolate")  
-        xnew = np.linspace(np.min(data["points"]), np.max(data["points"]), num=1001, endpoint=True)
-        plt.plot(np.hstack([np.min(data["points"]),xnew]), np.hstack([0,stepfun(xnew)]), color=col_cdf)
+        stepfun = interp1d(x = np.hstack([np.min(data.points),data.points]), y = np.hstack([0,data.ecdf]), kind='previous', fill_value="extrapolate")
+        xnew = np.linspace(np.min(data.points), np.max(data.points), num=1001, endpoint=True)
+        plt.plot(np.hstack([np.min(data.points),xnew]), np.hstack([0,stepfun(xnew)]), color=col_cdf)
         plt.axhline(y = 0, linestyle = ':', color = 'grey')
         plt.axhline(y = 1, linestyle = ':', color = 'grey')
-        if bounds and "upper" in data:
-            if any(data["lower"] > 0 ):
-                stepfun2 = interp1d(x = np.hstack([np.min(data["points"]),data["points"]]), y = np.hstack([0,data["lower"]]), kind='previous', fill_value="extrapolate")  
-                plt.plot(np.hstack([np.min(data["points"]),xnew]), np.hstack([0,stepfun2(xnew)]), color = col_bounds, linestyle = ':')
+        #if bounds and "upper" in data:
+        if bounds and len(data.upper) > 0:
+            if any(data.lower > 0 ):
+                stepfun2 = interp1d(x = np.hstack([np.min(data.points),data.points]), y = np.hstack([0,data.lower]), kind='previous', fill_value="extrapolate")
+                plt.plot(np.hstack([np.min(data.points),xnew]), np.hstack([0,stepfun2(xnew)]), color = col_bounds, linestyle = ':')
             else:    
                 plt.hlines(y = 0, xmin = np.min(xnew), xmax = np.max(xnew), color = col_bounds, linestyle = ':')
-            if any(data["upper"] < 1):
-                stepfun3 = interp1d(x = np.hstack([np.min(data["points"]),data["points"]]), y = np.hstack([0,data["upper"]]), kind='previous', fill_value="extrapolate")  
-                plt.plot(np.hstack([np.min(data["points"]),xnew]), np.hstack([0,stepfun3(xnew)]), color = col_bounds, linestyle = ':')
+            if any(data.upper < 1):
+                stepfun3 = interp1d(x = np.hstack([np.min(data.points),data.points]), y = np.hstack([0,data.points]), kind='previous', fill_value="extrapolate")
+                plt.plot(np.hstack([np.min(data.points),xnew]), np.hstack([0,stepfun3(xnew)]), color = col_bounds, linestyle = ':')
             else:
                 plt.hlines(y = 1,  xmin = np.min(xnew), xmax = np.max(xnew), color = col_bounds, linestyle = ':')
         plt.title("IDR predictive CDF")
@@ -235,9 +246,9 @@ class idrpredict(object):
             raise ValueError("obs must have length 1 or the same length as predictions")
     
         def get_points(predictions):
-            return np.array(predictions['points'])
+            return np.array(predictions.points)
         def get_cdf(predictions):
-            return np.array(predictions['cdf'])
+            return np.array(predictions.ecdf)
         def modify_points(points):
             return np.hstack([points[0], np.diff(points)])
         def crps0(y, p, w, x):
@@ -270,15 +281,15 @@ class idrpredict(object):
             raise ValueError("quantiles must be a numeric vector with entries in [0,1]")
     
         def q0 (data):
-            return(interp1d(x = np.hstack([data["cdf"], np.max(data["cdf"])]), y =np.hstack([data["points"],data["points"].iloc[-1]]) ,kind='next', fill_value="extrapolate")(quantiles))
+            return(interp1d(x = np.hstack([data.ecdf, np.max(data.ecdf)]), y =np.hstack([data.points,data.points.iloc[-1]]) ,kind='next', fill_value="extrapolate")(quantiles))
 
         return(np.vstack(list(map(q0, predictions))))
     
         
 
 class idrobject:
-        def __init__(self, cdf, thresholds, indices, X, y,groups, orders, constraints):
-            self.cdf = cdf
+        def __init__(self, ecdf, thresholds, indices, X, y,groups, orders, constraints):
+            self.ecdf = ecdf
             self.thresholds = thresholds 
             self.indices = indices
             self.X = X
@@ -314,7 +325,7 @@ class idrobject:
 
             """
     
-            cdf = self.cdf.copy()
+            cdf = self.ecdf.copy()
             thresholds = self.thresholds.copy()
             order_indices = []
             preds = []
@@ -323,8 +334,9 @@ class idrobject:
                 for i in range(indices.shape[0]):
                     edf = np.round(cdf[i,:], digits)
                     sel = np.hstack([edf[0] > 0, np.diff(edf) > 0])
-                    dat = {'points': thresholds[sel], 'cdf': edf[sel]}
-                    tmp = pd.DataFrame(dat, columns = ['points', 'cdf'])
+                    #dat = {'points': thresholds[sel], 'cdf': edf[sel]}
+                    #tmp = pd.DataFrame(dat, columns = ['points', 'cdf'])
+                    tmp = predictions_idr(ecdf = edf[sel], points = thresholds[sel], lower = [], upper = [])
                     for j in indices[i]:
                         order_indices.append(j) 
                         preds.append(tmp)
@@ -349,7 +361,8 @@ class idrobject:
         #if fct:
          #   X = X.astype(int)
           #  x = x.astype(int)
-                smaller = findInterval(x, X)
+                #smaller = findInterval(x, X)
+                smaller = np.array([bisect.bisect_left(X, a) for a in x])
                 smaller = np.where(smaller == 0, 1, smaller) - 1
                 wg = np.interp(x, X, np.arange(1, X.shape[0]+1), left=1, right= X.shape[0]) - np.arange(1, X.shape[0]+1)[smaller.astype(int)]    
                 greater = smaller + (wg > 0).astype(int) 
@@ -368,9 +381,9 @@ class idrobject:
                     l = l[ind]
                     u = u[ind]
                     cdf = np.round(np.multiply(l, wg) + np.multiply(u, ws), digits)
-                    dat = {"points": thresholds[ind], "lower": l, "cdf": cdf, "upper": u}
-                    tmp = pd.DataFrame(dat, columns = ['points', 'lower', 'cdf', 'upper'])
-                    return tmp
+                    #dat = {"points": thresholds[ind], "lower": l, "cdf": cdf, "upper": u}
+                    #tmp = pd.DataFrame(dat, columns = ['points', 'lower', 'cdf', 'upper'])
+                    return predictions_idr(ecdf = cdf, points = thresholds[ind], lower = l, upper = u)
         
                 preds = list(map(fun_preds, l, u, list(ws), list(wg)))
                 idr_predictions = idrpredict(predictions = preds, incomparables = None) 
@@ -391,8 +404,9 @@ class idrobject:
                 if upr < len(edf)-1:
                     points = np.delete(points, np.arange(upr, len(edf)))
                     edf = np.delete(edf, np.arange(upr, len(edf)))                    
-                dat = {'points':points, 'lower':edf, 'cdf':edf, 'upper':edf}
-                tmp = pd.DataFrame(dat, columns = ['points', 'lower', 'cdf', 'upper'])
+                #dat = {'points':points, 'lower':edf, 'cdf':edf, 'upper':edf}
+                #tmp = pd.DataFrame(dat, columns = ['points', 'lower', 'cdf', 'upper'])
+                tmp = predictions_idr(ecdf = edf, points = points, lower = edf, upper = edf)
                 for i in np.where(incomparables == True)[0]:
                     preds.append(tmp)
                     order_indices.append(i)
@@ -417,8 +431,9 @@ class idrobject:
                     upper = upper[sel]
                     estimCDF = np.round(0.5*(lower+upper), digits)
               
-                dat = {'points': thresholds[sel], 'lower': lower, 'cdf': estimCDF, 'upper': upper}
-                tmp = pd.DataFrame(dat, columns = ['points', 'lower', 'cdf', 'upper'])
+                #dat = {'points': thresholds[sel], 'lower': lower, 'cdf': estimCDF, 'upper': upper}
+                #tmp = pd.DataFrame(dat, columns = ['points', 'lower', 'cdf', 'upper'])
+                tmp = predictions_idr(ecdf = estimCDF, points = thresholds[sel], lower = lower, upper = upper)
                 order_indices.append(i)
                 preds.append(tmp)
 
@@ -426,15 +441,7 @@ class idrobject:
             idr_predictions = idrpredict(predictions = preds_rearanged, incomparables = np.where(incomparables))  
     #return preds_rearanged             
             return idr_predictions  
-            
-            
-        
-def findInterval(x, X):
-    xar = np.asarray(x)
-    tf = np.zeros(xar.shape[0])
-    for xval in X:
-        tf = (xval <= xar).astype(int) + tf
-    return(tf)
+
 
 
 def prepareData(X, groups, orders):
@@ -564,8 +571,11 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
     N = Xp.shape[0]
     if nVar == 1:
         constr = None
-#        diagnostic = dict({"precision":0, "convergence":0})
-        cdf = pavaDec(cpY, thresholds, weights)
+        rep_time = [len(x) for x in indices]
+        flat_indices = [item for sublist in cpY for item in sublist]
+        posY = np.repeat(np.arange(len(indices)), rep_time)[np.argsort(flat_indices, kind="mergesort")]
+        cdf_vec = isocdf_seq(np.array(weights), np.ones(y.shape[0]), np.sort(y), posY, thresholds)
+        cdf1 = np.reshape(cdf_vec, (N, nThr), order="F")
     else:
         constr = comp_ord(Xp)
         cdf = np.zeros((N,nThr-1))
@@ -584,7 +594,7 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
         pmax = np.where(sol.x>0,sol.x,0)
         cdf[:,0] = np.where(pmax<1, pmax, 1) 
         if I > 1:
-            for i in progressbar(range(1,I)):
+            for i in tqdm(range(1,I)):
                 m.warm_start(x = cdf[:, i - 1])
                 q = -weights*np.array(cpY.apply(lambda x: np.mean(np.array(x) <= thresholds[i]))) 
                 m.update(q = q)
@@ -592,11 +602,12 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
                 pmax = np.where(sol.x>0,sol.x,0)
                 cdf[:, i] =np.where(pmax<1, pmax, 1)
 
-    cdf = pavaCorrect(cdf)
-    cdf1 = np.ones((N,nThr))
-    cdf1[:,:-1] = cdf
+    if nVar > 1:
+        cdf = pavaCorrect(cdf)
+        cdf1 = np.ones((N,nThr))
+        cdf1[:,:-1] = cdf
     
-    idr_object = idrobject(cdf = cdf1, thresholds = thresholds, indices = indices, X = Xp, y = cpY, 
+    idr_object = idrobject(ecdf = cdf1, thresholds = thresholds, indices = indices, X = Xp, y = cpY,
                            groups = groups, orders = orders, constraints = constr)
     return(idr_object)
 

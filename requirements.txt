@@ -1,0 +1,7 @@
+numpy>=1.19.2 
+pandas>=1.1.1
+matplotlib>=3.3.2
+scipy>=1.5.2
+tqdm>=4.54.0
+dc_stat_think>=1.1.1
+osqp>=0.6.1
