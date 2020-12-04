@@ -1,0 +1,10 @@
+# Build directory
+build
+
+# Python
+*.egg-info
+__pycache__
+.eggs
+
+# else
+.DS_Store
