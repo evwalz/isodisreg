@@ -314,7 +314,7 @@ class idrobject:
             Returns
             -------
             object of class idrpredict.
-            predictions : Each element is a data frame containing:
+            predictions : Object of class predictions_idr:
                 points : where predictie CDF has jumps
                 cdf : estimated CDF evaluated at points
                 lower : bounds for estimated CDF (out-of-sample predictions)
