@@ -10,3 +10,4 @@ __pycache__
 # else
 .DS_Store
 .idea
+dist/
