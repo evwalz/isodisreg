@@ -5,7 +5,7 @@ build
 *.egg-info
 __pycache__
 .eggs
-.ipynb_checlpoints
+.ipynb_checkpoints
 
 # else
 .DS_Store
