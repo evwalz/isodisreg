@@ -12,7 +12,7 @@ from .pava import pavaDec, pavaCorrect
 from .partialorders import comp_ord, tr_reduc, neighbor_points
 import random
 import bisect
-from ._isodisreg import isocdf_seq
+from _isodisreg import isocdf_seq
 
 class predictions_idr(object):
 
