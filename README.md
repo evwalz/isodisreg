@@ -7,7 +7,7 @@ Code to compute IDR, a powerful technique for the estimation of distributions of
 
 To build and install clone repository and run
 
-``` python ./setup.py install   ```
+``` pip install ./isodisreg   ```
 
 
 # Reference
