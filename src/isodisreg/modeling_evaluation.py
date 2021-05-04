@@ -75,6 +75,7 @@ class idrpredict(object):
         matrix of brier scores
 
         """
+	y = np.asarray(y)
         if y.ndim > 1:
                 raise ValueError("y must be a 1-D array")
         thresholds = np.asarray(thresholds)
@@ -91,7 +92,12 @@ class idrpredict(object):
                 sel_column = y <= thresholds    
                 predicted[:, sel_column] = predicted[:, sel_column] - 1
         else:
-            predicted = np.subtract(predicted , np.vstack([y[k] <= thresholds for k in range(ly)]))
+            #predicted = np.subtract(predicted , np.vstack([y[k] <= thresholds for k in range(ly)]))
+	    lt = len(thresholds)
+	    if thresholds.size == 1:
+		predicted = predicted-(y <= thresholds[0])
+	    else:
+	    	predicted = np.subtract(predicted , np.transpose(np.vstack([y <= thresholds[k] for k in range(lt)])))
         return(np.square(predicted))
 
     def pit (self, y, randomize = True, seed = None) :
