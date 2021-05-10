@@ -94,10 +94,11 @@ class idrpredict(object):
                 predicted[:, sel_column] = predicted[:, sel_column] - 1
         else:
             #predicted = np.subtract(predicted , np.vstack([y[k] <= thresholds for k in range(ly)]))
-            lt = len(thresholds)
+            
             if thresholds.size == 1:
                 predicted = predicted-(y <= thresholds[0])
             else:
+                lt = thresholds.size
                 predicted = np.subtract(predicted , np.transpose(np.vstack([y <= thresholds[k] for k in range(lt)])))
         return(np.square(predicted))
 
