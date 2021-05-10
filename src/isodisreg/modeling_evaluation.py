@@ -100,7 +100,7 @@ class idrpredict(object):
             else:
                 lt = thresholds.size
                 predicted = np.subtract(predicted , np.transpose(np.vstack([y <= thresholds[k] for k in range(lt)])))
-        return(np.square(predicted))
+        return(predicted**2)
 
     def pit (self, y, randomize = True, seed = None) :
         """
