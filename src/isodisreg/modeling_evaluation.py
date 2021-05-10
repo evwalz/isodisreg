@@ -75,11 +75,11 @@ class idrpredict(object):
         matrix of brier scores
 
         """
-	y = np.asarray(y)
+	    y = np.asarray(y)
         if y.ndim > 1:
                 raise ValueError("y must be a 1-D array")
         thresholds = np.asarray(thresholds)
-        y = np.asarray(y)
+        
         predicted = np.asarray(self.cdf(thresholds = thresholds))
         ly = y.size
         if ly != 1 and ly != predicted.shape[0]:
