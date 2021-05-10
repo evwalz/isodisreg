@@ -96,7 +96,7 @@ class idrpredict(object):
             #predicted = np.subtract(predicted , np.vstack([y[k] <= thresholds for k in range(ly)]))
             
             if thresholds.size == 1:
-                predicted = predicted-(y <= thresholds[0])
+                predicted = predicted-(y <= thresholds)
             else:
                 lt = thresholds.size
                 predicted = np.subtract(predicted , np.transpose(np.vstack([y <= thresholds[k] for k in range(lt)])))
