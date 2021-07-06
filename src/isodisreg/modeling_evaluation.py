@@ -549,7 +549,7 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
     if y.size != X.shape[0]:
         raise ValueError("length of y must match number of rows in X")
     
-    if all(item in  ['comp', 'icx', 'std'] for item in orders.values()) == False:
+    if all(item in  ['comp', 'icx', 'sd'] for item in orders.values()) == False:
         raise ValueError("orders must be in comp, icx, sd")
     
     M =  all(elem in groups.keys() for elem in X.columns)  
