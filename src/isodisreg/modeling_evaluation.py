@@ -484,7 +484,7 @@ def prepareData(X, groups, orders):
                 X[val] = np.cumsum(tmp, axis=1)
     return X
 
-def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_iter = 10000, eps_rel = 0.00001, eps_abs = 0.00001):
+def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_iter = 10000, eps_rel = 0.00001, eps_abs = 0.00001, progress = True):
     """
     Fits isotonic distirbutional regression (IDR) to a training dataset. 
 
@@ -602,13 +602,23 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
         pmax = np.where(sol.x>0,sol.x,0)
         cdf[:,0] = np.where(pmax<1, pmax, 1) 
         if I > 1:
-            for i in tqdm(range(1,I)):
-                m.warm_start(x = cdf[:, i - 1])
-                q = -weights*np.array(cpY.apply(lambda x: np.mean(np.array(x) <= thresholds[i]))) 
-                m.update(q = q)
-                sol = m.solve()
-                pmax = np.where(sol.x>0,sol.x,0)
-                cdf[:, i] =np.where(pmax<1, pmax, 1)
+            if progress:
+                for i in tqdm(range(1,I)):
+                    m.warm_start(x = cdf[:, i - 1])
+                    q = -weights*np.array(cpY.apply(lambda x: np.mean(np.array(x) <= thresholds[i]))) 
+                    m.update(q = q)
+                    sol = m.solve()
+                    pmax = np.where(sol.x>0,sol.x,0)
+                    cdf[:, i] =np.where(pmax<1, pmax, 1)
+            else:
+                for i in range(1,I):
+                    m.warm_start(x = cdf[:, i - 1])
+                    q = -weights*np.array(cpY.apply(lambda x: np.mean(np.array(x) <= thresholds[i]))) 
+                    m.update(q = q)
+                    sol = m.solve()
+                    pmax = np.where(sol.x>0,sol.x,0)
+                    cdf[:, i] =np.where(pmax<1, pmax, 1)
+                
 
     if nVar > 1:
         cdf = pavaCorrect(cdf)
