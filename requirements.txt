@@ -5,3 +5,4 @@ scipy
 tqdm
 dc_stat_think>=1.1.1
 osqp>=0.6.1
+numba

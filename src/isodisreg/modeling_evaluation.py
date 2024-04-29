@@ -8,11 +8,11 @@ from tqdm import tqdm
 import dc_stat_think as dcst
 from collections import defaultdict
 import osqp
-from .pava import pavaDec, pavaCorrect
+#from .pava import pavaCorrect
 from .partialorders import comp_ord, tr_reduc, neighbor_points
 import random
 import bisect
-from _isodisreg import isocdf_seq
+from _isodisreg import isocdf_seq, pavaCorrect_c
 
 class predictions_idr(object):
 
@@ -621,7 +621,7 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
                 
 
     if nVar > 1:
-        cdf = pavaCorrect(cdf)
+        cdf = pavaCorrect_c(cdf)
         cdf1 = np.ones((N,nThr))
         cdf1[:,:-1] = cdf
     
