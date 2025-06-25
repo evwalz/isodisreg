@@ -6,3 +6,4 @@ tqdm
 dc_stat_think>=1.1.1
 osqp>=0.6.1
 numba
+importlib-resources; python_version<"3.9"
