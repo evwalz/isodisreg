@@ -260,8 +260,10 @@ py::array_t<double> pavaCorrect_c(py::array_t<double, py::array::c_style> y) {
     auto out_shape = out_buf.shape;
     auto out_strides = out_buf.strides;
 
-    double weight[m];
-    int index[m];
+    //double weight[m]; this throws an error, changed to the following
+    std::vector<double> weight(m);
+    //int index[m]; this throws an error, changed to the following
+    std::vector<int> index(m);
     int ci = 0, j = 0;
     double nw;
 
