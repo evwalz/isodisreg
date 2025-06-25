@@ -639,7 +639,7 @@ def idr (y, X, groups = None, orders = dict({"1":"comp"}), verbose = False, max_
         i = 0
         I = nThr -1
         #conv =  np.full(I, False, dtype=bool) 
-	u = np.ones(nConstr)
+        u = np.ones(nConstr)
         q = -weights*np.array(cpY.apply(lambda x: np.mean(np.array(x) <= thresholds[i]))) 
         m = osqp.OSQP()
         m.setup(P=P, q=q, A=A, l=l, u = u, verbose = verbose, max_iter = max_iter, eps_rel = eps_rel, eps_abs = eps_abs) 
